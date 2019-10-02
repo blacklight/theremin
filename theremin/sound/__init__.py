@@ -26,8 +26,9 @@ class Track:
 
 
 class SoundProcessor:
-    def __init__(self, backend='portaudio', output=None, channels=2):
+    def __init__(self, backend='portaudio', output=None, channels=2, discrete=False):
         self.backend = backend
+        self.discrete = discrete
         self.server = Server(audio=self.backend, jackname='theremin', winhost='theremin', nchnls=channels)
         self.audio_output = output or pa_get_default_output()
         self.server.setOutputDevice(self.audio_output)
@@ -73,3 +74,4 @@ class SoundProcessor:
     def set_frequency(self, i, frequency):
         assert 0 <= i < len(self.tracks)
         self.tracks[i].set_frequency(frequency)
+

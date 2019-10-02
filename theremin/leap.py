@@ -1,6 +1,6 @@
-import math
-
 import Leap
+
+from .sound.utils import freq_to_midi_str, freq_to_midi, midi_to_freq
 
 
 def list_leap_motions():
@@ -16,13 +16,14 @@ def list_leap_motions():
 
 
 class LeapMotion(Leap.Listener):
-    def __init__(self, dsp, track=0, amplitude=.5, min_frequency=55, max_frequency=10000):
+    def __init__(self, dsp, track=0, amplitude=.5, min_frequency=55, max_frequency=10000, left_handed=False):
         super().__init__()
         self.dsp = dsp
         self.track = track
         self.amplitude = amplitude
         self.min_frequency = min_frequency
         self.max_frequency = max_frequency
+        self.left_handed = left_handed
         self.controller = Leap.Controller()
         self.controller.add_listener(self)
 
@@ -44,15 +45,11 @@ class LeapMotion(Leap.Listener):
 
         if len(frame.hands) > 0:
             if len(frame.hands) == 1:
-                left = frame.hands[0]
-                right = None
+                left = frame.hands[0] if frame.hands[0].is_left else None
+                right = frame.hands[0] if frame.hands[0].is_right else None
             else:
-                if frame.hands[0].palm_position[0] < frame.hands[1].palm_position[0]:
-                    left = frame.hands[0]
-                    right = frame.hands[1]
-                else:
-                    left = frame.hands[1]
-                    right = frame.hands[0]
+                left = frame.hands[0] if frame.hands[0].is_left else frame.hands[1]
+                right = frame.hands[1] if frame.hands[0].is_right else frame.hands[1]
 
         return left, right
 
@@ -64,33 +61,37 @@ class LeapMotion(Leap.Listener):
                 self.dsp.stop(self.track)
             return
 
-        y_left = left.palm_position[1]
-        frequency = self.y_to_freq(y_left)
+        y_left = left.palm_position[1] if left else None
+        y_right = right.palm_position[1] if right else None
+        frequency = None
+        amplitude = None
 
-        if right:
-            y_right = right.palm_position[1]
-            self.amplitude = self.y_to_amplitude(y_right)
+        if self.left_handed:
+            if y_left:
+                frequency = self.y_to_freq(y_left)
+            if y_right:
+                amplitude = self.y_to_amplitude(y_right)
+        else:
+            if y_left:
+                amplitude = self.y_to_amplitude(y_left)
+            if y_right:
+                frequency = self.y_to_freq(y_right)
 
-        self.dsp.set_frequency(self.track, frequency)
-        self.dsp.set_volume(self.track, self.amplitude)
+        if frequency:
+            if self.dsp.discrete:
+                frequency = midi_to_freq(freq_to_midi(frequency))
+            self.dsp.set_frequency(self.track, frequency)
 
-        if not self.dsp.is_playing(self.track):
-            self.dsp.play(self.track)
+            if not self.dsp.is_playing(self.track):
+                self.dsp.play(self.track)
 
-        print('Hand height: {:.8f}, Frequency: {:1f}, MIDI: {}, Amplitude: {:4f}'.format(
-            y_left, frequency, self.freq_to_midi_note(frequency), self.amplitude))
+        if amplitude:
+            self.dsp.set_volume(self.track, amplitude)
+            self.amplitude = amplitude
 
-    @staticmethod
-    def midi_note_to_str(midi):
-        notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-        base_c = 24
-        i = (midi - base_c) % len(notes)
-        octave = int((midi - base_c) / 12)
-        return '{note}{octave}'.format(note=notes[i], octave=octave)
-
-    @classmethod
-    def freq_to_midi_note(cls, freq):
-        return cls.midi_note_to_str(int(math.log2(freq / 440.0) * 12) + 69)
+        print('Left hand height: {:.8f}, Right hand height: {:.8f}, Frequency: {:1f}, MIDI: {}, Amplitude: {:4f}'.
+              format(y_left or 0, y_right or 0, frequency or 0, freq_to_midi_str(frequency) if frequency else 0,
+                     self.amplitude))
 
     def y_to_freq(self, y):
         y_min_height = 70
@@ -100,7 +101,6 @@ class LeapMotion(Leap.Listener):
 
         y -= y_min_height
         y_max_height -= y_min_height
-        # max_freq -= min_freq
 
         frequency = min_freq + ((max_freq*y) / y_max_height)
         if frequency < min_freq:

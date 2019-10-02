@@ -1,25 +1,67 @@
+import argparse
 import sys
 
-import pyo
+from .leap import list_leap_motions
+from .sound import list_output_devices
+from .sound.utils import midi_str_to_midi, midi_to_freq
+from .theremin import theremin
 
-from .leap import LeapMotion
-from .sound import SoundProcessor
+
+def parse_args(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--list-audio-outputs', '-l', dest='list_audio_outputs', required=False,
+                        action='store_true', help='List the available audio output devices')
+    parser.add_argument('--list-leap-motions', '-L', dest='list_leap_motions', required=False,
+                        action='store_true', help='List the available Leap Motion devices')
+    parser.add_argument('--audio-output', '-o', dest='audio_output', required=False,
+                        type=int, help='Select an output audio device by index (see -l)')
+    parser.add_argument('--audio-backend', '-b', dest='audio_backend', required=False, default='portaudio',
+                        help='Select the audio backend (default: portaudio). Supported: ' +
+                             '{"portaudio", "jack", "coreaudio"}')
+    parser.add_argument('--channels', '-c', dest='channels', required=False, type=int, default=2,
+                        help='Number of audio channels (default: 2)')
+    parser.add_argument('--discrete', '-d', dest='discrete', required=False, action='store_true',
+                        help='If set then discrete notes will be generated instead of samples over a continuous ' +
+                             'frequency space (default: false)')
+    parser.add_argument('--left-handed', dest='left_handed', required=False, action='store_true',
+                        help='If set then the pitch control will be on the left hand and the volume control on the' +
+                             'right hand. Otherwise, the controls are inverted (default: false)')
+    parser.add_argument('--generator', '-g', dest='generator', required=False,
+                        default='SineLoop', help='Wave generator to be used. See ' +
+                                                 'http://ajaxsoundstudio.com/pyodoc/api/classes/generators.html. ' +
+                                                 'Default: SineLoop')
+    parser.add_argument('--min-frequency', dest='min_frequency', required=False, type=int, default=55,
+                        help='Minimum audio frequency (default: 55 Hz)')
+    parser.add_argument('--max-frequency', dest='max_frequency', required=False, type=int, default=10000,
+                        help='Maximum audio frequency (default: 10 kHz)')
+    parser.add_argument('--min-note', dest='min_note', required=False, type=str, default=None,
+                        help='Minimum MIDI note, as a string (e.g. A4)')
+    parser.add_argument('--max-note', dest='max_note', required=False, type=str, default=None,
+                        help='Maximum MIDI note, as a string (e.g. A4)')
+
+    opts, args = parser.parse_known_args(args)
+    return opts, args
 
 
-def theremin(wave='SineLoop', audio_output=None, audio_backend='portaudio', channels=2,
-             min_frequency=55, max_frequency=10000):
-    dsp = SoundProcessor(output=audio_output, backend=audio_backend, channels=channels)
-    dsp.start()
+def main(args=None):
+    if not args:
+        args = sys.argv[1:]
 
-    assert hasattr(pyo, wave)
-    wave = getattr(pyo, wave)
-    audio = wave()
-    channel = dsp.add_track(audio)
-    print('Audio processor started')
+    opts, args = parse_args(args)
 
-    sensor = LeapMotion(dsp, track=channel, min_frequency=min_frequency, max_frequency=max_frequency)
-    print('Press ENTER to quit')
-    sys.stdin.readline()
+    if opts.list_audio_outputs:
+        list_output_devices()
+        return
 
-    sensor.stop()
-    dsp.shutdown()
+    if opts.list_leap_motions:
+        list_leap_motions()
+        return
+
+    if opts.min_note:
+        opts.min_frequency = midi_to_freq(midi_str_to_midi(opts.min_note))
+    if opts.max_note:
+        opts.max_frequency = midi_to_freq(midi_str_to_midi(opts.max_note))
+
+    theremin(wave=opts.generator, audio_backend=opts.audio_backend, discrete=opts.discrete,
+             min_frequency=opts.min_frequency, max_frequency=opts.max_frequency, left_handed=opts.left_handed,
+             audio_output=opts.audio_output, channels=opts.channels)
