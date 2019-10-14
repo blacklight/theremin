@@ -8,7 +8,13 @@ from .theremin import theremin
 
 
 def parse_args(args):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+            description='Theremin emulator through a Leap Motion device.\n\n' +
+            'Make sure that your Leap Motion device is plugged in and\n' +
+            'the leapd daemon is running before running it.\n\n' +
+            'Fabio "BlackLight" Manganiello <blacklight86{a}gmail{d}com>\n',
+            formatter_class=argparse.RawTextHelpFormatter)
+
     parser.add_argument('--list-audio-outputs', '-l', dest='list_audio_outputs', required=False,
                         action='store_true', help='List the available audio output devices')
     parser.add_argument('--list-leap-motions', '-L', dest='list_leap_motions', required=False,
