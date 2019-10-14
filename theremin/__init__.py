@@ -9,10 +9,11 @@ from .theremin import theremin
 
 def parse_args(args):
     parser = argparse.ArgumentParser(
+            prog='theremin',
             description='Theremin emulator through a Leap Motion device.\n\n' +
             'Make sure that your Leap Motion device is plugged in and\n' +
-            'the leapd daemon is running before running it.\n\n' +
-            'Fabio "BlackLight" Manganiello <blacklight86{a}gmail{d}com>\n',
+            'the leapd daemon is running before running it.\n',
+            epilog='\n------------\nAuthor: Fabio "BlackLight" Manganiello <blacklight86{a}gmail{d}com>\n',
             formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument('--list-audio-outputs', '-l', dest='list_audio_outputs', required=False,
