@@ -17,34 +17,36 @@ def parse_args(args):
             formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument('--list-audio-outputs', '-l', dest='list_audio_outputs', required=False,
-                        action='store_true', help='List the available audio output devices')
+            action='store_true', help='List the available audio output devices')
     parser.add_argument('--list-leap-motions', '-L', dest='list_leap_motions', required=False,
-                        action='store_true', help='List the available Leap Motion devices')
+            action='store_true', help='List the available Leap Motion devices')
     parser.add_argument('--audio-output', '-o', dest='audio_output', required=False,
-                        type=int, help='Select an output audio device by index (see -l)')
+            type=int, help='Select an output audio device by index (see -l)')
     parser.add_argument('--audio-backend', '-b', dest='audio_backend', required=False, default='portaudio',
-                        help='Select the audio backend (default: portaudio). Supported: ' +
-                             '{"portaudio", "jack", "coreaudio"}')
+            help='Select the audio backend (default: portaudio). Supported: ' +
+            '{"portaudio", "jack", "coreaudio"}')
     parser.add_argument('--channels', '-c', dest='channels', required=False, type=int, default=2,
-                        help='Number of audio channels (default: 2)')
+            help='Number of audio channels (default: 2)')
+    parser.add_argument('--rate', '-r', dest='sampling_rate', required=False, type=int, default=44100,
+            help='Sampling rate (default: 44100 Hz)')
     parser.add_argument('--discrete', '-d', dest='discrete', required=False, action='store_true',
-                        help='If set then discrete notes will be generated instead of samples over a continuous ' +
-                             'frequency space (default: false)')
+            help='If set then discrete notes will be generated instead of samples over a continuous ' +
+            'frequency space (default: false)')
     parser.add_argument('--left-handed', dest='left_handed', required=False, action='store_true',
-                        help='If set then the pitch control will be on the left hand and the volume control on the' +
-                             'right hand. Otherwise, the controls are inverted (default: false)')
+            help='If set then the pitch control will be on the left hand and the volume control on the' +
+            'right hand. Otherwise, the controls are inverted (default: false)')
     parser.add_argument('--generator', '-g', dest='generator', required=False,
-                        default='SineLoop', help='Wave generator to be used. See ' +
-                                                 'http://ajaxsoundstudio.com/pyodoc/api/classes/generators.html. ' +
-                                                 'Default: SineLoop')
+            default='SineLoop', help='Wave generator to be used. See ' +
+            'http://ajaxsoundstudio.com/pyodoc/api/classes/generators.html. ' +
+            'Default: SineLoop')
     parser.add_argument('--min-frequency', dest='min_frequency', required=False, type=int, default=55,
-                        help='Minimum audio frequency (default: 55 Hz)')
+            help='Minimum audio frequency (default: 55 Hz)')
     parser.add_argument('--max-frequency', dest='max_frequency', required=False, type=int, default=10000,
-                        help='Maximum audio frequency (default: 10 kHz)')
+            help='Maximum audio frequency (default: 10 kHz)')
     parser.add_argument('--min-note', dest='min_note', required=False, type=str, default=None,
-                        help='Minimum MIDI note, as a string (e.g. A4)')
+            help='Minimum MIDI note, as a string (e.g. A4)')
     parser.add_argument('--max-note', dest='max_note', required=False, type=str, default=None,
-                        help='Maximum MIDI note, as a string (e.g. A4)')
+            help='Maximum MIDI note, as a string (e.g. A4)')
 
     opts, args = parser.parse_known_args(args)
     return opts, args
@@ -71,4 +73,4 @@ def main(args=None):
 
     theremin(wave=opts.generator, audio_backend=opts.audio_backend, discrete=opts.discrete,
              min_frequency=opts.min_frequency, max_frequency=opts.max_frequency, left_handed=opts.left_handed,
-             audio_output=opts.audio_output, channels=opts.channels)
+             audio_output=opts.audio_output, channels=opts.channels, sampling_rate=opts.sampling_rate)

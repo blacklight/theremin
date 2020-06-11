@@ -26,10 +26,11 @@ class Track:
 
 
 class SoundProcessor:
-    def __init__(self, backend='portaudio', output=None, channels=2, discrete=False):
+    def __init__(self, sampling_rate=44100, backend='portaudio', output=None, channels=2, discrete=False):
         self.backend = backend
         self.discrete = discrete
-        self.server = Server(audio=self.backend, jackname='theremin', winhost='theremin', nchnls=channels)
+        self.sampling_rate = sampling_rate
+        self.server = Server(audio=self.backend, sr=sampling_rate, jackname='theremin', winhost='theremin', nchnls=channels)
         self.audio_output = output or pa_get_default_output()
         self.server.setOutputDevice(self.audio_output)
         self.tracks = []

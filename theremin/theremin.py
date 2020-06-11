@@ -6,8 +6,8 @@ from .sound import SoundProcessor
 
 
 def theremin(wave='SineLoop', audio_output=None, audio_backend='portaudio', channels=2, min_frequency=55,
-             max_frequency=10000, discrete=False, left_handed=False):
-    dsp = SoundProcessor(output=audio_output, backend=audio_backend, channels=channels, discrete=discrete)
+             max_frequency=10000, sampling_rate=44100, discrete=False, left_handed=False):
+    dsp = SoundProcessor(output=audio_output, backend=audio_backend, channels=channels, sampling_rate=sampling_rate, discrete=discrete)
     dsp.start()
 
     assert hasattr(pyo, wave)
